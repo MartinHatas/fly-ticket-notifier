@@ -1,4 +1,4 @@
-package cz.hatoff.ftn;
+package cz.hatoff.ftn.model;
 
 
 public class FlyTicket {

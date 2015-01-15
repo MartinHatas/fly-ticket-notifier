@@ -3,25 +3,24 @@ package cz.hatoff.ftn;
 import cz.hatoff.ftn.checker.TicketChecker;
 import cz.hatoff.ftn.config.ConfigurationKey;
 import cz.hatoff.ftn.config.ConfigurationLoader;
-import org.apache.commons.configuration.CompositeConfiguration;
+import cz.hatoff.ftn.model.FlyTicket;
+import cz.hatoff.ftn.sender.SmsSender;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class FtnApplication {
 
-
     private static final Logger logger = LogManager.getLogger(FtnApplication.class);
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private Configuration configuration;
 
@@ -43,12 +42,29 @@ public class FtnApplication {
     private void startInternal(String[] args) {
         loadConfiguration();
 
-        try {
-            List<FlyTicket> flyTickets = new TicketChecker().checkTickets();
-          //  new SmsSender().sendSMS(flyTickets);
-        } catch (Exception e) {
-            logger.info("Error", e);
-        }
+        final Runnable runCheckTickets = new Runnable() {
+            @Override
+            public void run() {
+                SimpleDateFormat dateFormat = new SimpleDateFormat(TicketChecker.DATE_FORMAT);
+                try {
+
+                    List<FlyTicket> flyTickets = new TicketChecker(
+                            Integer.parseInt(configuration.getString(ConfigurationKey.PRIZE_MAXIMAL)),
+                            dateFormat.parse(configuration.getString(ConfigurationKey.DATE_DEPARTURE)),
+                            dateFormat.parse(configuration.getString(ConfigurationKey.DATE_RETURN)),
+                            Integer.parseInt(configuration.getString(ConfigurationKey.DAYS_MIN)),
+                            Integer.parseInt(configuration.getString(ConfigurationKey.DAYS_MAX)),
+                            Integer.parseInt(configuration.getString(ConfigurationKey.CHANGES_MAX))
+                    ).checkTickets();
+
+                    new SmsSender(configuration.getStringArray(ConfigurationKey.PHONE_NUMBERS)).sendSMS(flyTickets);
+                } catch (Exception e) {
+                    logger.info("Error occurred while checking for tickets or sending SMS messages.", e);
+                }
+            }
+        };
+
+        final ScheduledFuture<?> runCheckTicketsHandle = scheduler.scheduleWithFixedDelay(runCheckTickets, 0, 15, TimeUnit.MINUTES);
     }
 
     private void loadConfiguration() {

@@ -1,3 +1,0 @@
-operator=auto&number=722944895&message=Ahoj&submit=Odeslat
-
-application/x-www-form-urlencoded=application/x-www-form-urlencoded

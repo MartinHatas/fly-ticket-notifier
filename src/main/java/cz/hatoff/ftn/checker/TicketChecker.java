@@ -1,7 +1,7 @@
 package cz.hatoff.ftn.checker;
 
 
-import cz.hatoff.ftn.FlyTicket;
+import cz.hatoff.ftn.model.FlyTicket;
 import cz.hatoff.ftn.FtnApplication;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -31,16 +31,18 @@ public class TicketChecker {
     public static final String MONTH_FORMAT = "yyyy-MM-dd";
 
 
-    private int maxPrize = 1500;
+    private int maxPrize;
     private Date departureDate , returnDate;
-    private int minDays = 2, maxDays = 8;
-    private int maxChanges = 3;
+    private int minDays, maxDays;
+    private int maxChanges ;
 
-    public TicketChecker() {
-        departureDate = new Date();
-        Calendar calendar = new GregorianCalendar();
-        calendar.add(Calendar.DATE, 30);
-        returnDate = calendar.getTime();
+    public TicketChecker(int maxPrize, Date departureDate, Date returnDate, int minDays, int maxDays, int maxChanges) {
+        this.maxPrize = maxPrize;
+        this.departureDate = departureDate;
+        this.returnDate = returnDate;
+        this.minDays = minDays;
+        this.maxDays = maxDays;
+        this.maxChanges = maxChanges;
     }
 
     public List<FlyTicket> checkTickets() throws Exception{

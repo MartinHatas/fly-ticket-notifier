@@ -5,15 +5,12 @@ import cz.hatoff.ftn.checker.TicketChecker;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
+import java.util.*;
 
 public class ConfigurationLoader {
 
@@ -28,7 +25,10 @@ public class ConfigurationLoader {
             PropertiesConfiguration defaultConfiguration = new PropertiesConfiguration(DEFAULT_CONFIG_FILE_NAME);
 
             PropertiesConfiguration userConfiguration = new PropertiesConfiguration(USER_CONFIG_FILE_NAME);
-            userConfiguration.setReloadingStrategy(new FileChangedReloadingStrategy());
+
+//            TODO: reload configuration need validation of values
+//            userConfiguration.setReloadingStrategy(new FileChangedReloadingStrategy());
+//            userConfiguration.addConfigurationListener();
 
             CompositeConfiguration compositeConfiguration = new CompositeConfiguration();
             compositeConfiguration.addConfiguration(defaultConfiguration);
@@ -37,6 +37,7 @@ public class ConfigurationLoader {
             checkMandatoryParameters(compositeConfiguration);
             checkDates(compositeConfiguration);
             checkDays(compositeConfiguration);
+
 
             logger.info("Running application with following settings:");
             Iterator<String> keys = compositeConfiguration.getKeys();
@@ -86,8 +87,14 @@ public class ConfigurationLoader {
     }
 
     private void checkMandatoryParameters(Configuration configuration) {
-        if (configuration.getStringArray(ConfigurationKey.PHONE_NUMBER).length == 0) {
-            throw new RuntimeException(String.format("Cannot found mandatory property '%s' in configuration file '%s'.", ConfigurationKey.PHONE_NUMBER, USER_CONFIG_FILE_NAME));
+        String[] phoneNumbers = configuration.getStringArray(ConfigurationKey.PHONE_NUMBERS);
+        if (phoneNumbers.length == 0) {
+            throw new RuntimeException(String.format("Cannot found mandatory property '%s' in configuration file '%s'.", ConfigurationKey.PHONE_NUMBERS, USER_CONFIG_FILE_NAME));
         }
+        String[] trimmedPhoneNumbers = new String[phoneNumbers.length];
+        for(int i = 0; i < phoneNumbers.length; i++) {
+            trimmedPhoneNumbers[i] = phoneNumbers[i].trim();
+        }
+        configuration.setProperty(ConfigurationKey.PHONE_NUMBERS, trimmedPhoneNumbers);
     }
 }

@@ -1,7 +1,7 @@
 package cz.hatoff.ftn.checker;
 
 
-import cz.hatoff.ftn.FlyTicket;
+import cz.hatoff.ftn.model.FlyTicket;
 
 import java.util.ArrayList;
 import java.util.List;
