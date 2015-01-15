@@ -1,5 +1,7 @@
 package cz.hatoff.ftn;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import cz.hatoff.ftn.checker.TicketChecker;
 import cz.hatoff.ftn.config.ConfigurationKey;
 import cz.hatoff.ftn.config.ConfigurationLoader;
@@ -10,6 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,6 +27,8 @@ public class FtnApplication {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     private Configuration configuration;
+
+    Cache<Integer, FlyTicket> cache;
 
     public static void main(String[] args) {
         logger.info("Starting FLY TICKETS NOTIFIER server as standalone application.");
@@ -41,6 +47,7 @@ public class FtnApplication {
 
     private void startInternal(String[] args) {
         loadConfiguration();
+        initCache();
 
         final Runnable runCheckTickets = new Runnable() {
             @Override
@@ -55,7 +62,16 @@ public class FtnApplication {
                             Integer.parseInt(configuration.getString(ConfigurationKey.DAYS_MAX)),
                             Integer.parseInt(configuration.getString(ConfigurationKey.CHANGES_MAX))
                     ).checkTickets();
-                    new SmsSender(configuration.getStringArray(ConfigurationKey.PHONE_NUMBERS)).sendSMS(flyTickets);
+
+                    List<FlyTicket> newFlyTickets = new ArrayList<FlyTicket>();
+                    for (FlyTicket flyTicket : flyTickets) {
+                        if (cache.getIfPresent(flyTicket.hashCode()) == null){
+                            newFlyTickets.add(flyTicket);
+                        }
+                        cache.put(flyTicket.hashCode(), flyTicket);
+                    }
+                    logger.info(String.format("From '%d' suitable fly tickets are '%d' new.", flyTickets.size(), newFlyTickets.size()));
+                    new SmsSender(configuration.getStringArray(ConfigurationKey.PHONE_NUMBERS)).sendSMS(newFlyTickets);
                 } catch (Exception e) {
                     logger.info("Error occurred while checking for tickets or sending SMS messages.", e);
                 }
@@ -65,6 +81,13 @@ public class FtnApplication {
         long delay = configuration.getLong(ConfigurationKey.CHECKING_TIME_MINUTES);
         logger.info(String.format("Creating scheduled task which will be checking fly ticket periodically every '%d' minutes.", delay));
         final ScheduledFuture<?> runCheckTicketsHandle = scheduler.scheduleWithFixedDelay(runCheckTickets, 0, delay, TimeUnit.MINUTES);
+    }
+
+    private void initCache() {
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(1000)
+                .expireAfterWrite(configuration.getLong(ConfigurationKey.CHECKING_TIME_MINUTES) + 5L, TimeUnit.MINUTES)
+                .build();
     }
 
     private void loadConfiguration() {
