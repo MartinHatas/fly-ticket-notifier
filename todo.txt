@@ -1,3 +1,5 @@
 - procrun
 - one message per ticket (url ar something)
 - do not send same message again
+- maven build
+- batch
