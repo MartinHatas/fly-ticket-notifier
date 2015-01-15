@@ -147,7 +147,7 @@ public class TicketChecker {
                 .setParameter("adults", "1")
                 .setParameter("children", "0")
                 .setParameter("infants", "0")
-                .setParameter("maxChng", "3")
+                .setParameter("maxChng", String.valueOf(maxChanges))
                 .setParameter("currency", "CZK")
                 .setParameter("indexSubmit", "Hledat")
                 .build();
