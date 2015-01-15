@@ -27,8 +27,9 @@ public class TicketChecker {
     private static final String AZAIR_SEARCH_HOST = "www.azair.cz";
     private static final String AZAIR_SEARCH_PATH = "/azfin.php";
 
-    private final SimpleDateFormat monthFormat = new SimpleDateFormat("yyyyMM");
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
+    public static final String MONTH_FORMAT = "yyyy-MM-dd";
+
 
     private int maxPrize = 1500;
     private Date departureDate , returnDate;
@@ -91,6 +92,9 @@ public class TicketChecker {
     }
 
     private HttpGet createHttpGetRequest() throws URISyntaxException {
+
+        SimpleDateFormat monthFormat = new SimpleDateFormat(MONTH_FORMAT);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
         URI uri = new URIBuilder()
                 .setScheme("http")
