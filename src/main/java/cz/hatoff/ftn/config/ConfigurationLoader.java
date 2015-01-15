@@ -31,8 +31,8 @@ public class ConfigurationLoader {
 //            userConfiguration.addConfigurationListener();
 
             CompositeConfiguration compositeConfiguration = new CompositeConfiguration();
-            compositeConfiguration.addConfiguration(defaultConfiguration);
             compositeConfiguration.addConfiguration(userConfiguration);
+            compositeConfiguration.addConfiguration(defaultConfiguration);
 
             checkMandatoryParameters(compositeConfiguration);
             checkDates(compositeConfiguration);

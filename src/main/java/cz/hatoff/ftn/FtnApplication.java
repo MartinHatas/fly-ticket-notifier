@@ -20,12 +20,12 @@ public class FtnApplication {
 
     private static final Logger logger = LogManager.getLogger(FtnApplication.class);
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     private Configuration configuration;
 
     public static void main(String[] args) {
-        logger.info("Starting FLY TICKETS NOTIFIER server as standalone server.");
+        logger.info("Starting FLY TICKETS NOTIFIER server as standalone application.");
         new FtnApplication().startInternal(args);
     }
 
@@ -47,7 +47,6 @@ public class FtnApplication {
             public void run() {
                 SimpleDateFormat dateFormat = new SimpleDateFormat(TicketChecker.DATE_FORMAT);
                 try {
-
                     List<FlyTicket> flyTickets = new TicketChecker(
                             Integer.parseInt(configuration.getString(ConfigurationKey.PRIZE_MAXIMAL)),
                             dateFormat.parse(configuration.getString(ConfigurationKey.DATE_DEPARTURE)),
@@ -56,7 +55,6 @@ public class FtnApplication {
                             Integer.parseInt(configuration.getString(ConfigurationKey.DAYS_MAX)),
                             Integer.parseInt(configuration.getString(ConfigurationKey.CHANGES_MAX))
                     ).checkTickets();
-
                     new SmsSender(configuration.getStringArray(ConfigurationKey.PHONE_NUMBERS)).sendSMS(flyTickets);
                 } catch (Exception e) {
                     logger.info("Error occurred while checking for tickets or sending SMS messages.", e);
@@ -64,7 +62,9 @@ public class FtnApplication {
             }
         };
 
-        final ScheduledFuture<?> runCheckTicketsHandle = scheduler.scheduleWithFixedDelay(runCheckTickets, 0, 15, TimeUnit.MINUTES);
+        long delay = configuration.getLong(ConfigurationKey.CHECKING_TIME_MINUTES);
+        logger.info(String.format("Creating scheduled task which will be checking fly ticket periodically every '%d' minutes.", delay));
+        final ScheduledFuture<?> runCheckTicketsHandle = scheduler.scheduleWithFixedDelay(runCheckTickets, 0, delay, TimeUnit.MINUTES);
     }
 
     private void loadConfiguration() {

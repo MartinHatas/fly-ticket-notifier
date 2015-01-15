@@ -10,5 +10,6 @@ public class ConfigurationKey {
     public static final String DAYS_MIN = "days.min";
     public static final String DAYS_MAX = "days.max";
     public static final String CHANGES_MAX = "changes.max";
+    public static final String CHECKING_TIME_MINUTES = "checking.time.minutes";
 
 }
