@@ -58,7 +58,6 @@ public class SmsSender {
     }
 
     private HttpPost createHttpPostRequest(FlyTicket flyTicket, String phoneNumber) throws Exception {
-
         URI uri = new URIBuilder()
                 .setScheme("http")
                 .setHost(SMS_WEB_HOST)
@@ -70,7 +69,7 @@ public class SmsSender {
         List<NameValuePair> nvps = new ArrayList<NameValuePair>();
         nvps.add(new BasicNameValuePair("operator", "auto"));
         nvps.add(new BasicNameValuePair("number", phoneNumber));
-        nvps.add(new BasicNameValuePair("message", flyTicket.toString()));
+        nvps.add(new BasicNameValuePair("message", flyTicket.toSMS()));
         nvps.add(new BasicNameValuePair("submit", "Odeslat"));
         httpPost.setEntity(new UrlEncodedFormEntity(nvps));
         httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");

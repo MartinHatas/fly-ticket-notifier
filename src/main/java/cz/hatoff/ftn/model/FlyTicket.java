@@ -7,6 +7,8 @@ public class FlyTicket {
     private String date;
     private String prize;
     private String length;
+    private String fullUrl;
+    private String shortUrl;
 
     public String getDestination() {
         return destination;
@@ -38,6 +40,26 @@ public class FlyTicket {
 
     public void setLength(String length) {
         this.length = length;
+    }
+
+    public String getFullUrl() {
+        return fullUrl;
+    }
+
+    public void setFullUrl(String fullUrl) {
+        this.fullUrl = fullUrl;
+    }
+
+    public String getShortUrl() {
+        return shortUrl;
+    }
+
+    public void setShortUrl(String shortUrl) {
+        this.shortUrl = shortUrl;
+    }
+
+    public String toSMS(){
+        return String.format("%s %s %s", shortUrl, prize, destination).substring(0, 37);
     }
 
     @Override

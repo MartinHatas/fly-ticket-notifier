@@ -7,6 +7,8 @@ import cz.hatoff.ftn.config.ConfigurationKey;
 import cz.hatoff.ftn.config.ConfigurationLoader;
 import cz.hatoff.ftn.model.FlyTicket;
 import cz.hatoff.ftn.sender.SmsSender;
+import cz.hatoff.ftn.shorten.BitDoUrlShortenProvider;
+import cz.hatoff.ftn.shorten.ShortenUrlProvider;
 import org.apache.commons.configuration.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,12 +58,24 @@ public class FtnApplication {
                     List<FlyTicket> flyTickets = getFlyTicketsFromWeb(dateFormat);
                     if (!flyTickets.isEmpty()) {
                         List<FlyTicket> newFlyTickets = filterAlreadySentTickets(flyTickets);
+                        shortenUrl(newFlyTickets);
                         sendSmsWithTickets(newFlyTickets);
                     } else {
                         logger.info("Does not found any fly tickets corresponding to given criteria.");
                     }
                 } catch (Exception e) {
                     logger.info("Error occurred while checking for tickets or sending SMS messages.", e);
+                }
+            }
+
+            private void shortenUrl(List<FlyTicket> newFlyTickets) {
+                ShortenUrlProvider shortenUrlProvider = new BitDoUrlShortenProvider();
+                for (FlyTicket newFlyTicket : newFlyTickets) {
+                    try {
+                        newFlyTicket.setShortUrl(shortenUrlProvider.shortenUrl(newFlyTicket.getFullUrl()));
+                    } catch (Exception e) {
+                        logger.error(String.format("Failed shorten url of fly ticket '%s'", newFlyTicket.toString()), e);
+                    }
                 }
             }
 

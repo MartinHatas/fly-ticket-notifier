@@ -58,6 +58,7 @@ public class TicketChecker {
                 HttpEntity entity = response.getEntity();
 
                 if (entity != null) {
+                    String fullUrl = httpget.getURI().toString();
                     InputStream inputStream = entity.getContent();
                     try {
                         List<String> lines = IOUtils.readLines(inputStream);
@@ -68,6 +69,8 @@ public class TicketChecker {
                             FlyTicket flyTicket = flyTicketIterator.next();
                             if (Integer.parseInt(flyTicket.getPrize()) > maxPrize) {
                                 flyTicketIterator.remove();
+                            } else {
+                                flyTicket.setFullUrl(fullUrl);
                             }
                         }
                         logger.info("Found " + flyTickets.size() + " suitable fly tickets.");
