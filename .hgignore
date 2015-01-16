@@ -3,3 +3,4 @@ syntax: glob
 *.iml
 target/*
 log.txt
+build_ftn/*

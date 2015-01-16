@@ -15,14 +15,31 @@
         </developer>
     </developers>
 
-    <build>
+    <properties>
+        <install.dir>${project.basedir}/build_ftn</install.dir>
+        <final.name>fly-ticket-notifier</final.name>
+    </properties>
 
+    <build>
         <plugins>
+
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.6.1</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${install.dir}</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.5.3</version>
                 <configuration>
-                    <finalName>fly-ticket-notifier</finalName>
+                    <finalName>${final.name}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
@@ -43,7 +60,71 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <executions>
+
+                    <execution>
+                        <id>copy-main-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${install.dir}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>target</directory>
+                                    <includes>
+                                        <include>${final.name}.${packaging}</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>copy-external-configuration</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${install.dir}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}</directory>
+                                    <includes>
+                                        <include>configuration.properties</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>copy-binaries</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${install.dir}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/bin</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
         </plugins>
+
+
     </build>
 
     <dependencies>
