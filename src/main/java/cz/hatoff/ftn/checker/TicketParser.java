@@ -2,6 +2,8 @@ package cz.hatoff.ftn.checker;
 
 
 import cz.hatoff.ftn.model.FlyTicket;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +12,12 @@ import java.util.regex.Pattern;
 
 public class TicketParser {
 
-    private final Pattern resultListPattern = Pattern.compile("<div class=\"list\" id=\"reslist\">");
+    private static final Logger logger = LogManager.getLogger(TicketParser.class);
+
+    private final Pattern resultListPattern = Pattern.compile(".*id=\"reslist\".*");
     private final Pattern dateAndDestinationPattern = Pattern.compile(".*<span class=\"date\">.*(\\d{2}\\.\\d{2}\\.\\d{4}).*<span class=\"aeroDetail\">(.*?)</span>.*");
     private final Pattern prizePattern = Pattern.compile(".*<span class=\"sumPrice\">.*<span class=\"bp\">(\\d+).*");
-    private final Pattern lengthPattern = Pattern.compile(".*<span class=\"bookmarkedMeta\">.*(\\d+).*");
+    private final Pattern lengthPattern = Pattern.compile(".*<span class=\"lengthOfStay\">.*(\\d+).*");
 
 
     private enum SearchState{
@@ -62,6 +66,10 @@ public class TicketParser {
                     break;
                 }
             }
+        }
+
+        if (flyTickets.isEmpty()) {
+            logger.warn("Does not found any flight tickets between given dates. It may be caused by changed format on azair.cz. ");
         }
 
         return flyTickets;
