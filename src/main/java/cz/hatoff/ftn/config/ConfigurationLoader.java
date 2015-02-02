@@ -82,7 +82,7 @@ public class ConfigurationLoader {
             Date plusMontDate = calendar.getTime();
             logger.info(String.format("Detected that return date '%s' is before departure date '%s'. Going to use this date '%s' as return date.", dateFormat.format(returnDate), dateFormat.format(departureDate), dateFormat.format(plusMontDate)));
             returnDate = plusMontDate;
-            configuration.setProperty(ConfigurationKey.DATE_RETURN, returnDate);
+            configuration.setProperty(ConfigurationKey.DATE_RETURN, dateFormat.format(returnDate));
         }
     }
 
