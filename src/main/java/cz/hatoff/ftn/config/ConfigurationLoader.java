@@ -91,6 +91,9 @@ public class ConfigurationLoader {
         if (phoneNumbers.length == 0) {
             throw new RuntimeException(String.format("Cannot found mandatory property '%s' in configuration file '%s'.", ConfigurationKey.PHONE_NUMBERS, USER_CONFIG_FILE_NAME));
         }
+        if (phoneNumbers.length == 1 && phoneNumbers[0].isEmpty()) {
+            throw new RuntimeException(String.format("Cannot found mandatory property '%s' in configuration file '%s'.", ConfigurationKey.PHONE_NUMBERS, USER_CONFIG_FILE_NAME));
+        }
         String[] trimmedPhoneNumbers = new String[phoneNumbers.length];
         for(int i = 0; i < phoneNumbers.length; i++) {
             trimmedPhoneNumbers[i] = phoneNumbers[i].trim();

@@ -1,7 +1,5 @@
 package cz.hatoff.ftn;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import cz.hatoff.ftn.checker.TicketChecker;
 import cz.hatoff.ftn.config.ConfigurationKey;
 import cz.hatoff.ftn.config.ConfigurationLoader;
@@ -10,12 +8,18 @@ import cz.hatoff.ftn.sender.SmsSender;
 import cz.hatoff.ftn.shorten.BitDoUrlShortenProvider;
 import cz.hatoff.ftn.shorten.ShortenUrlProvider;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -23,13 +27,13 @@ import java.util.concurrent.TimeUnit;
 
 public class FtnApplication {
 
+    private static final File sentTicketFile = new File("senttickets");
+
     private static final Logger logger = LogManager.getLogger(FtnApplication.class);
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     private Configuration configuration;
-
-    Cache<Integer, FlyTicket> cache;
 
     public static void main(String[] args) {
         logger.info("Starting FLY TICKETS NOTIFIER server as standalone application.");
@@ -48,7 +52,7 @@ public class FtnApplication {
 
     private void startInternal(String[] args) {
         loadConfiguration();
-        initCache();
+        initSendLogFile();
 
         final Runnable runCheckTickets = new Runnable() {
             @Override
@@ -57,9 +61,9 @@ public class FtnApplication {
                 try {
                     List<FlyTicket> flyTickets = getFlyTicketsFromWeb(dateFormat);
                     if (!flyTickets.isEmpty()) {
-                        List<FlyTicket> newFlyTickets = filterAlreadySentTickets(flyTickets);
-                        shortenUrl(newFlyTickets);
-                        sendSmsWithTickets(newFlyTickets);
+                        filterAlreadySentTickets(flyTickets);
+                        shortenUrl(flyTickets);
+                        sendSmsWithTickets(flyTickets);
                     } else {
                         logger.info("Does not found any fly tickets corresponding to given criteria.");
                     }
@@ -94,16 +98,38 @@ public class FtnApplication {
                                 ).checkTickets();
             }
 
-            private List<FlyTicket> filterAlreadySentTickets(List<FlyTicket> flyTickets) {
-                List<FlyTicket> newFlyTickets = new ArrayList<FlyTicket>();
-                for (FlyTicket flyTicket : flyTickets) {
-                    if (cache.getIfPresent(flyTicket.hashCode()) == null) {
-                        newFlyTickets.add(flyTicket);
+            private synchronized void filterAlreadySentTickets(List<FlyTicket> flyTickets) {
+                Scanner scanner = null;
+                try {
+                    scanner = new Scanner(sentTicketFile);
+                    while (scanner.hasNextLine()) {
+                        String line = scanner.nextLine();
+                        Iterator<cz.hatoff.ftn.model.FlyTicket> iterator = flyTickets.iterator();
+                        while (iterator.hasNext()) {
+                            cz.hatoff.ftn.model.FlyTicket next = iterator.next();
+                            if (line.contains(next.toString())) {
+                                iterator.remove();
+                                break;
+                            }
+                        }
                     }
-                    cache.put(flyTicket.hashCode(), flyTicket);
+
+                } catch (FileNotFoundException e) {
+                    logger.error("File not found.", e);
+                    initSendLogFile();
+                    filterAlreadySentTickets(flyTickets);
+                } finally {
+                    IOUtils.closeQuietly(scanner);
                 }
-                logger.info(String.format("From '%d' suitable fly tickets are '%d' new.", flyTickets.size(), newFlyTickets.size()));
-                return newFlyTickets;
+
+
+                try {
+                    FileUtils.writeLines(sentTicketFile, "UTF-8", flyTickets, true);
+                } catch (IOException e) {
+                    logger.error("Failed to write new results to file.");
+                }
+
+                logger.info(String.format("Found '%d' new fly tickets.", flyTickets.size()));
             }
         };
 
@@ -112,12 +138,19 @@ public class FtnApplication {
         final ScheduledFuture<?> runCheckTicketsHandle = scheduler.scheduleWithFixedDelay(runCheckTickets, 0, delay, TimeUnit.MINUTES);
     }
 
-    private void initCache() {
-        cache = CacheBuilder.newBuilder()
-                .maximumSize(1000)
-                .expireAfterWrite(configuration.getLong(ConfigurationKey.CHECKING_TIME_MINUTES) + 5L, TimeUnit.MINUTES)
-                .build();
+    private void initSendLogFile() {
+        if (!sentTicketFile.exists()) {
+            try {
+                boolean newFile = sentTicketFile.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create sent ticket file.", e);
+            }
+        }
+        if (!sentTicketFile.canRead() || !sentTicketFile.canWrite()) {
+            throw new RuntimeException("Cannot read or write to sent ticket file '" + sentTicketFile.getAbsolutePath() + "'.");
+        }
     }
+
 
     private void loadConfiguration() {
         try {

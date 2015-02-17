@@ -59,7 +59,8 @@ public class FlyTicket {
     }
 
     public String toSMS(){
-        return String.format("%s %s %s", shortUrl, prize, destination).substring(0, 37);
+        String format = String.format("%s %s %s", shortUrl, prize, destination);
+        return format.substring(0, Math.min(format.length(), 37));
     }
 
     @Override
