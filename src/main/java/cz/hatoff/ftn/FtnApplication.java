@@ -101,7 +101,7 @@ public class FtnApplication {
             private synchronized void filterAlreadySentTickets(List<FlyTicket> flyTickets) {
                 Scanner scanner = null;
                 try {
-                    scanner = new Scanner(sentTicketFile);
+                    scanner = new Scanner(sentTicketFile, "UTF-8");
                     while (scanner.hasNextLine()) {
                         String line = scanner.nextLine();
                         Iterator<cz.hatoff.ftn.model.FlyTicket> iterator = flyTickets.iterator();

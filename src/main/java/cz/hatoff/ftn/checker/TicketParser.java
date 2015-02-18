@@ -21,7 +21,7 @@ public class TicketParser {
 
 
     private enum SearchState{
-        RESULT_LIST, DATE_AND_DESTINATION, PRIZE, LENGTH
+        RESULT_LIST, DATE_AND_DESTINATION, PRIZE
     }
 
     private SearchState searchState = SearchState.RESULT_LIST;
@@ -52,14 +52,6 @@ public class TicketParser {
                     Matcher prizeMatcher = prizePattern.matcher(line);
                     if (prizeMatcher.matches()) {
                         flyTicket.setPrize(prizeMatcher.group(1));
-                        searchState = SearchState.LENGTH;
-                    }
-                    break;
-                }
-                case LENGTH: {
-                    Matcher lengthMatcher = lengthPattern.matcher(line);
-                    if (lengthMatcher.matches()) {
-                        flyTicket.setLength(lengthMatcher.group(1));
                         searchState = SearchState.DATE_AND_DESTINATION;
                         flyTickets.add(flyTicket);
                     }

@@ -1,12 +1,13 @@
 package cz.hatoff.ftn.model;
 
 
+import java.text.Normalizer;
+
 public class FlyTicket {
 
     private String destination;
     private String date;
     private String prize;
-    private String length;
     private String fullUrl;
     private String shortUrl;
 
@@ -15,7 +16,7 @@ public class FlyTicket {
     }
 
     public void setDestination(String destination) {
-        this.destination = destination;
+        this.destination = stripAccents(destination);
     }
 
     public String getDate() {
@@ -23,7 +24,7 @@ public class FlyTicket {
     }
 
     public void setDate(String date) {
-        this.date = date;
+        this.date = stripAccents(date);
     }
 
     public String getPrize() {
@@ -32,14 +33,6 @@ public class FlyTicket {
 
     public void setPrize(String prize) {
         this.prize = prize;
-    }
-
-    public String getLength() {
-        return length;
-    }
-
-    public void setLength(String length) {
-        this.length = length;
     }
 
     public String getFullUrl() {
@@ -59,9 +52,17 @@ public class FlyTicket {
     }
 
     public String toSMS(){
-        String format = String.format("%s %s %s", shortUrl, prize, destination);
+        String format = String.format("%s %s;%s;%s", shortUrl, prize, date.substring(0, 5), destination);
         return format.substring(0, Math.min(format.length(), 37));
     }
+
+    public static String stripAccents(String text) {
+        String result = text == null ? null :
+                Normalizer.normalize(text, Normalizer.Form.NFD)
+                        .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        return result;
+    }
+
 
     @Override
     public String toString() {
@@ -69,7 +70,6 @@ public class FlyTicket {
                 "destination='" + destination + '\'' +
                 ", date='" + date + '\'' +
                 ", prize='" + prize + '\'' +
-                ", length='" + length + '\'' +
                 '}';
     }
 
@@ -83,7 +83,6 @@ public class FlyTicket {
         if (date != null ? !date.equals(flyTicket.date) : flyTicket.date != null) return false;
         if (destination != null ? !destination.equals(flyTicket.destination) : flyTicket.destination != null)
             return false;
-        if (length != null ? !length.equals(flyTicket.length) : flyTicket.length != null) return false;
         if (prize != null ? !prize.equals(flyTicket.prize) : flyTicket.prize != null) return false;
 
         return true;
@@ -94,7 +93,6 @@ public class FlyTicket {
         int result = destination != null ? destination.hashCode() : 0;
         result = 31 * result + (date != null ? date.hashCode() : 0);
         result = 31 * result + (prize != null ? prize.hashCode() : 0);
-        result = 31 * result + (length != null ? length.hashCode() : 0);
         return result;
     }
 }
